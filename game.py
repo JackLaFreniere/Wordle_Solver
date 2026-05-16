@@ -3,11 +3,20 @@ class Wordle:
         self.answer = word
         self.attempts = 0
         self.max_attempts = 6
-        self.max_word_size = 5
-    
+
     def is_game_over(self) -> bool:
         return self.attempts >= self.max_attempts
 
+    def guess(self, word:str) -> str:
+        self.attempts += 1
+
+        if word == self.answer: #Player got it right
+            self.attempts = self.max_attempts
+            return "g" * 5
+        
+        return self.get_byg(self.answer, word)
+
+    @classmethod
     def get_letter_distribution(self, word:str) -> dict:
         dist = {}
 
@@ -20,27 +29,22 @@ class Wordle:
         
         return dist
 
-    def guess(self, word:str) -> str:
-        self.attempts += 1
-
-        if word == self.answer: #Player got it right
-            self.attempts = self.max_attempts
-            return "g" * self.max_word_size
+    @classmethod
+    def get_byg(self, answer:str, guess:str) -> str:
+        dist = self.get_letter_distribution(answer)
+        response = "b" * 5
         
-        dist = self.get_letter_distribution(self.answer)
-        response = "b" * self.max_word_size
-        
-        for i in range(self.max_word_size):
-            letter = word[i]
-            if letter == self.answer[i]: #Green
+        for i in range(5):
+            letter = guess[i]
+            if letter == answer[i]: #Green
                 response = response[:i] + "g" + response[i + 1:]
                 dist[letter] = dist[letter] - 1
         
-        for i in range(self.max_word_size):
+        for i in range(5):
             if response[i] == "g":
                 continue
 
-            letter = word[i]
+            letter = guess[i]
             if letter in dist and dist[letter]: #Yellow
                 dist[letter] = dist[letter] - 1
                 response = response[:i] + "y" + response[i + 1:]
