@@ -83,7 +83,7 @@ def calculate_best_guesses() -> tuple[str, np.ndarray]:
     answers = word_helper.get_possible_answers()
 
     print("Getting the best first word")
-    best_first_guess = 'roate'#jarvis.get_word(answers)
+    best_first_guess = jarvis.get_word(answers)
     print("Done!\n")
 
     with open(f"computed_data/{BEST_GUESS_NAME}", "w") as file:

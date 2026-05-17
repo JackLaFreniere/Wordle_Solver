@@ -31,6 +31,8 @@ class Jarvis:
                 guess = self.best_guess
             elif self.wordle.get_number_of_words_attempted() == 1:
                 guess = str(self.best_guesses_table[compute_data.get_byg_to_int(previous_response)])
+            elif len(remaining_words) == 1:
+                guess = remaining_words[0]
             else:
                 guess = self.get_word(remaining_words)
             
