@@ -6,6 +6,9 @@ class Wordle:
 
     def is_game_over(self) -> bool:
         return self.attempts >= self.max_attempts
+    
+    def get_number_of_words_attempted(self) -> int:
+        return self.attempts
 
     def guess(self, word:str) -> str:
         self.attempts += 1
