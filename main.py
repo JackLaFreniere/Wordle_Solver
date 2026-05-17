@@ -1,7 +1,6 @@
 import bot, word_helper, compute_data
 from statistics import mean, median, mode
 
-compute_data.main()
 jarvis = bot.Jarvis(compute_data.get_pattern_table(), compute_data.get_best_guesses())
 all_possible_answers = word_helper.get_possible_answers()
 

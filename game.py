@@ -14,7 +14,6 @@ class Wordle:
         self.attempts += 1
 
         if word == self.answer: #Player got it right
-            self.attempts = self.max_attempts
             return "g" * 5
         
         return self.get_byg(self.answer, word)
