@@ -1,4 +1,4 @@
-import game, word_helper, copy, sys, compute_data
+import game, word_helper, copy, compute_data
 import numpy as np
 from typing import Union
 
@@ -47,13 +47,13 @@ class Jarvis:
     
     def get_word(self, remaining_words:list) -> str:
         best_guess = self.accepted_guesses[0]
-        best_guess_score = sys.maxsize
+        best_guess_score = float("inf")
 
         for i in range(len(self.accepted_guesses)):
-            buckets = np.zeros(243, dtype=int)
+            buckets = {}
             for j in range(len(remaining_words)):
                 p = self.pattern_table[self.possible_answers_dict[remaining_words[j]]][i]
-                buckets[p] += 1
+                buckets[p] = buckets.get(p, 0) + 1
                 
             score = self.get_score(buckets)
             if score < best_guess_score:
@@ -62,8 +62,14 @@ class Jarvis:
         
         return best_guess
     
-    def get_score(self, buckets:np.ndarray) -> float:
-        return np.sum(buckets * buckets) / np.sum(buckets)
+    def get_score(self, buckets:dict) -> float:
+        weighted_total = sum(x ** 2 for x in list(buckets.values()))
+        total = sum(list(buckets.values()))
+        
+        if total != 0:
+            return weighted_total / total
+        else:
+            return 0
 
     def shorten_words(self, remaining_words:list, guess:str, response:str):
         if guess in remaining_words:
