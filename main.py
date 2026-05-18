@@ -1,43 +1,66 @@
-import bot, word_helper, compute_data, time
-from statistics import mean, median, mode
+import word_helper, compute_data, time
+from wordle_solver_bot import Jarvis
+from statistics import mean
 
-jarvis = bot.Jarvis(compute_data.get_pattern_table(), compute_data.get_best_guesses())
+def play_all_games(bot:Jarvis, all_possible_answers:list) -> tuple[list, int, int]:
+    start_time = time.time()
+
+    scores = []
+    for wordle_answer in all_possible_answers:
+        result = bot.play_game(wordle_answer)
+        scores.append(result)
+        print(result)
+
+    end_time = time.time()
+    mins, secs = divmod(end_time - start_time, 60)
+    
+    return (scores, int(mins), int(secs))
+
+def get_guess_distribution(guesses_list:list) -> dict:
+    guess_distribution = [0] * 6
+    for guess in guesses_list:
+        guess_distribution[guess - 1] += 1
+
+    return guess_distribution
+
+def print_information_breakdown(scores:list, mins:int, secs:int):
+    #Prints analysis
+    fails_list = []
+    guesses_list = []
+    results_list = []
+    successes_list = []
+    for score in scores:
+        guesses_list.append(len(score[0]))
+        results_list.append(len(score[1]))
+        successes_list.append(score[3])
+
+        if not score[3]:
+            fails_list.append(score)
+
+    total_attempts = len(guesses_list)
+    total_successes = successes_list.count(True)
+    success_rate = float(total_successes)/total_attempts
+
+    guess_distribution = get_guess_distribution(guesses_list)
+
+    print(f"\nTotal time taken: {mins}m:{secs}s")
+    print(f"Total attempts: {total_attempts}")
+    print(f"Number of successes: {total_successes}")
+    print(f"Success rate: {success_rate * 100:.5f}%")
+    print(f"Average number of attempts: {mean(guesses_list):.5f}\n")
+    
+    print(f"Guess distrubition:")
+    for i in range(len(guess_distribution)):
+        print(f"{i + 1} guesses: {guess_distribution[i]:,} ({float(guess_distribution[i])/total_attempts * 100:.2f})%")
+
+    print(f"Total fails: {len(fails_list)}")
+    for fail in fails_list:
+        print(fail)
+
+bot = Jarvis(compute_data.get_pattern_table(), compute_data.get_best_guesses())
 all_possible_answers = word_helper.get_possible_answers()
 
-start_time = time.time()
-scores = []
-# print(jarvis.play_game("creed"))
-for wordle_answer in all_possible_answers:
-    result = jarvis.play_game(wordle_answer)
-    scores.append(result)
-    print(result)
-end_time = time.time()
-mins, secs = divmod(end_time - start_time, 60)
+data = play_all_games(bot, all_possible_answers)
+results, mins, secs = data[0], data[1], data[2]
 
-#Prints analysis
-fails = []
-
-guesses = []
-results = []
-successes = []
-for score in scores:
-    guesses.append(len(score[0]))
-    results.append(len(score[1]))
-    successes.append(score[3])
-    if not score[3]:
-        fails.append(score)
-
-total_attempts = len(guesses)
-total_successes = successes.count(True)
-success_rate = float(total_successes)/total_attempts
-
-
-print(f"\nTotal time taken: {int(mins)}m:{int(secs)}s")
-print(f"Total attempts: {total_attempts}")
-print(f"Number of successes: {total_successes}")
-print(f"Success rate: {success_rate * 100:.5f}%")
-print(f"Average number of attempts: {mean(guesses):.5f}\n")
-
-print(f"Total fails: {len(fails)}")
-for fail in fails:
-    print(fail)
+print_information_breakdown(results, mins, secs)

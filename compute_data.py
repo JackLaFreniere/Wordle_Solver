@@ -1,4 +1,4 @@
-import word_helper, game, sys, bot, copy
+import word_helper, game, sys, wordle_solver_bot, copy
 from itertools import product
 import numpy as np
 
@@ -78,7 +78,7 @@ def create_best_guesses() -> tuple[str, np.ndarray]:
 
 def calculate_best_guesses() -> tuple[str, np.ndarray]:
     best_guesses_table = np.zeros((3**5), dtype="U5")    
-    jarvis = bot.Jarvis(get_pattern_table(), None) 
+    jarvis = wordle_solver_bot.Jarvis(get_pattern_table(), None) 
     
     answers = word_helper.get_possible_answers()
 
