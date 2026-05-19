@@ -2,6 +2,10 @@ import word_helper, compute_data, time
 from wordle_solver_bot import Jarvis
 from statistics import mean
 
+def print_result(result:list):
+    guesses, responses, word, passed = result[0], result[1], result[2], result[3]
+    print(f"{str(guesses):<54} {str(responses):<54} {word} {passed}")
+
 def play_all_games(bot:Jarvis, all_possible_answers:list) -> tuple[list, int, int]:
     start_time = time.time()
 
@@ -9,7 +13,7 @@ def play_all_games(bot:Jarvis, all_possible_answers:list) -> tuple[list, int, in
     for wordle_answer in all_possible_answers:
         result = bot.play_game(wordle_answer)
         scores.append(result)
-        print(result)
+        print_result(result)
 
     end_time = time.time()
     mins, secs = divmod(end_time - start_time, 60)
