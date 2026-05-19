@@ -1,5 +1,5 @@
-import compute_data
+from compute_data import get_pattern_table, get_best_guesses, get_best_guesses
 from wordle_solver_bot import Jarvis
 
-jarvis = Jarvis(compute_data.get_pattern_table(), compute_data.get_best_guesses())
-jarvis.play_game("", True)
+bot = Jarvis(get_pattern_table(), get_best_guesses())
+bot.play_game("", True)

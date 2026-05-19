@@ -1,4 +1,4 @@
-import game, actual_game, word_helper, copy, compute_data
+import wordle_game, actual_game, word_helper, copy, compute_data
 import numpy as np
 from typing import Union
 
@@ -11,7 +11,7 @@ class Jarvis:
         self.possible_answers_dict = dict(zip(self.possible_answers, range(len(self.possible_answers))))
         self.accepted_guesses_dict = dict(zip(self.accepted_guesses, range(len(self.accepted_guesses))))
 
-        compute_data.main()
+        compute_data.create_byg_and_int_dict()
 
         if isinstance(pattern_table, np.ndarray):
             self.pattern_table = pattern_table
@@ -23,7 +23,7 @@ class Jarvis:
         if is_actual_game:
             self.wordle = actual_game.Actual_Wordle("")
         else:
-            self.wordle = game.Wordle(word)
+            self.wordle = wordle_game.Wordle(word)
         
         attempts = []
         results = []
@@ -92,7 +92,7 @@ class Jarvis:
         to_remove = []
         for i in range(len(remaining_words)):
             r = remaining_words[i]
-            byg = game.Wordle.get_byg(remaining_words[i], guess)
+            byg = wordle_game.Wordle.get_byg(remaining_words[i], guess)
             if  byg != response:
                 to_remove.append(i)
         

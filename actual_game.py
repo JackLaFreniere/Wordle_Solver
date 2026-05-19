@@ -1,4 +1,4 @@
-from game import Wordle
+from wordle_game import Wordle
 
 class Actual_Wordle(Wordle):
     def __init__(self, word = ""):
@@ -6,8 +6,10 @@ class Actual_Wordle(Wordle):
     
     def guess(self, guess:str) -> str:
         self.attempts += 1
+
         print(f"My guess is: {guess}")
         byg = input("Enter the byg combination >> ")
+        
         if byg == "ggggg":
             self.attempts = self.max_attempts
         

@@ -1,8 +1,11 @@
-class Wordle:
+max_word_size = 5
+max_attempts = 6
+
+class Wordle:    
     def __init__(self, word):
         self.answer = word
         self.attempts = 0
-        self.max_attempts = 6
+        self.max_attempts = max_attempts
 
     def is_game_over(self) -> bool:
         return self.attempts >= self.max_attempts
@@ -15,7 +18,7 @@ class Wordle:
 
         if word == self.answer: #Player got it right
             self.attempts = self.max_attempts
-            return "g" * 5
+            return "g" * max_word_size
         
         return self.get_byg(self.answer, word)
 
@@ -35,15 +38,15 @@ class Wordle:
     @classmethod
     def get_byg(self, answer:str, guess:str) -> str:
         dist = self.get_letter_distribution(answer)
-        response = "b" * 5
+        response = "b" * max_word_size
         
-        for i in range(5):
+        for i in range(max_word_size):
             letter = guess[i]
             if letter == answer[i]: #Green
                 response = response[:i] + "g" + response[i + 1:]
                 dist[letter] = dist[letter] - 1
         
-        for i in range(5):
+        for i in range(max_word_size):
             if response[i] == "g":
                 continue
 

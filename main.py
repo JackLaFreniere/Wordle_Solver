@@ -14,7 +14,7 @@ def play_all_games(bot:Jarvis, all_possible_answers:list) -> tuple[list, int, in
     end_time = time.time()
     mins, secs = divmod(end_time - start_time, 60)
     
-    return (scores, int(mins), int(secs))
+    return (scores, int(mins), secs)
 
 def get_guess_distribution(guesses_list:list) -> dict:
     guess_distribution = [0] * 6
@@ -23,7 +23,7 @@ def get_guess_distribution(guesses_list:list) -> dict:
 
     return guess_distribution
 
-def print_information_breakdown(scores:list, mins:int, secs:int):
+def print_information_breakdown(scores:list, mins:int, secs:float):
     #Prints analysis
     fails_list = []
     guesses_list = []
@@ -43,7 +43,7 @@ def print_information_breakdown(scores:list, mins:int, secs:int):
 
     guess_distribution = get_guess_distribution(guesses_list)
 
-    print(f"\nTotal time taken: {mins}m:{secs}s")
+    print(f"\nTotal time taken: {mins}m:{secs:.2f}s")
     print(f"Total attempts: {total_attempts}")
     print(f"Number of successes: {total_successes}")
     print(f"Success rate: {success_rate * 100:.5f}%")
