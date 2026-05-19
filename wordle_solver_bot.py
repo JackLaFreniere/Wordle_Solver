@@ -32,13 +32,13 @@ class Jarvis:
         previous_response = ""
 
         while not self.wordle.is_game_over():
-            if self.wordle.get_number_of_words_attempted() == 0:
+            if self.wordle.get_number_of_words_attempted() == 0: #Precomputed first guess
                 guess = self.best_guess
-            elif self.wordle.get_number_of_words_attempted() == 1:
-                guess = str(self.best_guesses_table[compute_data.get_byg_to_int(previous_response)])
-            elif len(remaining_words) <= 2:
+            elif len(remaining_words) <= 2: #Force a valid guess there is one or two words left
                 guess = remaining_words[0]
-            else:
+            elif self.wordle.get_number_of_words_attempted() == 1: #Precomputed second guess
+                guess = str(self.best_guesses_table[compute_data.get_byg_to_int(previous_response)])
+            else: #Compute the current best guess
                 guess = self.get_word(remaining_words)
             
             response = self.wordle.guess(guess)
