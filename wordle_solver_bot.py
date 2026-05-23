@@ -1,9 +1,10 @@
 import wordle_game, actual_game, word_helper, copy, compute_data
 import numpy as np
-from typing import Union
 
 class Jarvis:
-    def __init__(self, pattern_table:Union[np.ndarray, None], best_guesses:Union[tuple[str, np.ndarray], None]):
+    def __init__(self):
+        compute_data.__init__()
+        
         self.wordle = None
         self.possible_answers = word_helper.get_possible_answers()
         self.accepted_guesses = word_helper.get_accepted_guesses()
@@ -56,7 +57,7 @@ class Jarvis:
 
         return (attempts, results, word, results[-1] == "ggggg")
     
-    def get_word(self, remaining_words:list) -> str:
+    def get_word(self, accepted_guesses:list, remaining_words:list) -> int:
         best_guess = self.accepted_guesses[0]
         best_guess_score = float("inf")
 

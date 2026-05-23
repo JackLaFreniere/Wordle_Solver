@@ -61,7 +61,7 @@ def print_information_breakdown(scores:list, mins:int, secs:float):
     for fail in fails_list:
         print(fail)
 
-bot = Jarvis(compute_data.get_pattern_table(), compute_data.get_best_guesses())
+bot = Jarvis()
 all_possible_answers = word_helper.get_possible_answers()
 
 data = play_all_games(bot, all_possible_answers)
