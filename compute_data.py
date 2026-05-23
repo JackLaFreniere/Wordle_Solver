@@ -1,7 +1,6 @@
 import word_helper, sys, copy
 from itertools import product
 from collections import Counter
-import wordle_solver_bot
 from wordle_game import max_word_size
 import numpy as np
 
@@ -13,13 +12,19 @@ GUESS_BYG_TABLE_NAME = "pattern_table.npy"
 GUESS_PRECOMPUTED_TABLE_NAME = "best_guesses.npy"
 BEST_GUESS_NAME = "best_guess.txt"
 
-GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME = DATA_DIRECTORY + GUESS_BYG_TABLE_NAME
+GUESS_BYG_TABLE_DIRECTORY_NAME = DATA_DIRECTORY + GUESS_BYG_TABLE_NAME
+GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME = DATA_DIRECTORY + GUESS_PRECOMPUTED_TABLE_NAME
+GUESS_PRECOMPUTED_GUESS_DIRECTORY_NAME = DATA_DIRECTORY + BEST_GUESS_NAME
 
 byg_to_int_dict, int_to_byd_dict = {}, {}
 
 total_byg_combinations = 3 ** max_word_size
 
-def __init__():
+pattern_table = None
+best_guess = None
+best_guesses = None
+
+def initialize_data():
     global byg_to_int_dict, int_to_byd_dict
 
     byg_to_int_dict, int_to_byd_dict = get_byg_and_int_dict()
@@ -51,10 +56,11 @@ def get_pattern_table() -> np.ndarray:
     Usage of pattern table goes like this:\n
         pattern_table[answer_index, guess_index] = byg_index
     """
+
     try:
-        return np.load(GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME, mmap_mode="r")
+        return np.load(GUESS_BYG_TABLE_DIRECTORY_NAME, mmap_mode="r")
     except:
-        return create_pattern_table(GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME)
+        return create_pattern_table()
     
 def get_best_guesses() -> tuple[str, np.ndarray]:
     """ 
@@ -66,19 +72,16 @@ def get_best_guesses() -> tuple[str, np.ndarray]:
         (best_guess, best_guesses)
         best_guess = guess_index
         best_guesses[fbyg_index] = guess_index
-
     """
-
-    directory = f"{DATA_DIRECTORY}{GUESS_PRECOMPUTED_TABLE_NAME}"
 
     try:
         best_guess = ""
-        with open(f"{DATA_DIRECTORY}{BEST_GUESS_NAME}", "r") as file:
+        with open(GUESS_PRECOMPUTED_GUESS_DIRECTORY_NAME, "r") as file:
             best_guess = int(file.readline())
               
-        return (best_guess, np.load(directory, mmap_mode="r"))
+        return (best_guess, np.load(GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME, mmap_mode="r"))
     except:
-        return create_best_guesses(directory)
+        return create_best_guesses()
 
 def create_pattern_table() -> np.ndarray:
     """
@@ -86,7 +89,7 @@ def create_pattern_table() -> np.ndarray:
     """
     
     pattern_table = calculate_pattern_table()
-    np.save(GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME, pattern_table)
+    np.save(GUESS_BYG_TABLE_DIRECTORY_NAME, pattern_table)
     
     return pattern_table
 
@@ -113,39 +116,38 @@ def calculate_pattern_table() -> np.ndarray:
 
     return pattern_table
 
-def create_best_guesses(directory:str) -> tuple[str, np.ndarray]:
+def create_best_guesses() -> tuple[str, np.ndarray]:
     """
     Calculates and saves the newly computed best **first** guess and best **second** guesses as well as returning both.
     """
         
     best_first_guess, best_guesses_table = calculate_best_guesses()
-    np.save(directory, best_guesses_table)
+    np.save(GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME, best_guesses_table)
 
-    with open(f"{DATA_DIRECTORY}{BEST_GUESS_NAME}", "w") as file:
-        file.write(best_first_guess)
+    with open(GUESS_PRECOMPUTED_GUESS_DIRECTORY_NAME, "w") as file:
+        file.write(str(best_first_guess))
         
-    return (best_first_guess, best_guesses_table)
+    return best_first_guess, best_guesses_table
 
 def calculate_best_guesses() -> tuple[str, np.ndarray]:
     """
     Calculates the best **first** guess and best **second** guesses and returns it.
     """
         
-    best_guesses_table = np.zeros((total_byg_combinations), dtype=np.uint8)    
-    jarvis = wordle_solver_bot.Jarvis() 
+    best_guesses_table = np.zeros((total_byg_combinations), dtype=np.uint16)    
     
     answers_indexes = word_helper.get_possible_answers_indexes()
     guesses_indexes = word_helper.get_accepted_guesses_indexes()
 
     print("Getting the best first word")
-    best_first_guess = jarvis.get_word(answers_indexes)
+    best_first_guess = get_word(guesses_indexes, answers_indexes)
     print("Done!\n")
 
     for i in range(total_byg_combinations):
-        print(f"Best guess: {i} out of {total_byg_combinations} ({(i + 1)/total_byg_combinations:.2%})")
+        print(f"Best guess: {i + 1} out of {total_byg_combinations} ({(i + 1)/total_byg_combinations:.2%})")
 
-        remaining_words = jarvis.shorten_words(copy.deepcopy(answers_indexes), best_first_guess, int_to_byd_dict[i])
-        best_second_word = jarvis.get_word(remaining_words)
+        remaining_guesses, remaining_answers = shorten_words(copy.deepcopy(guesses_indexes), copy.deepcopy(answers_indexes), best_first_guess, i)
+        best_second_word = get_word(remaining_guesses, remaining_answers)
         
         best_guesses_table[i] = best_second_word
 
@@ -182,14 +184,46 @@ def get_byg(answer:int, guess:int) -> str:
     
     return get_byg_to_int(response)
 
+def get_score(buckets:np.ndarray) -> float:
+    return np.sum(buckets * buckets) / np.sum(buckets)
+
+def get_word(accepted_guesses_indexes:list, remaining_words_indexes:list) -> int:
+    pattern_table = get_pattern_table()
+    best_guess = accepted_guesses_indexes[0]
+    best_guess_score = float("inf")
+
+    for i in accepted_guesses_indexes:
+        buckets = np.bincount(pattern_table[remaining_words_indexes, i])
+            
+        score = get_score(buckets)
+        if score < best_guess_score:
+            best_guess = i
+            best_guess_score = score
+    
+    return best_guess
+
+def shorten_words(remaining_guess_indexes:np.ndarray, remaining_answer_indexes:np.ndarray, guess:str, response:str) -> tuple[list, list]:
+    pattern_table = get_pattern_table()
+    
+    if guess in remaining_answer_indexes:
+        remaining_answer_indexes = remaining_answer_indexes[remaining_answer_indexes != guess]
+
+    if guess in remaining_guess_indexes:
+        remaining_guess_indexes = remaining_guess_indexes[remaining_guess_indexes != guess]
+
+    # remaining_answer_indexes = np.array(remaining_answer_indexes)
+    mask = pattern_table[remaining_answer_indexes, guess] == response
+    remaining_answer_indexes = remaining_answer_indexes[mask]
+
+    return remaining_guess_indexes, remaining_answer_indexes
+
 if __name__ == "__main__":
-    __init__()
+    initialize_data()
     if len(sys.argv) > 1:
         if any(flag in sys.argv for flag in ("--pt", "--all")):
-            start_time = perf_counter()
             create_pattern_table()
-            end_time = perf_counter()
-            print(end_time - start_time)
         if any(flag in sys.argv for flag in ("--bg", "--all")):
             create_best_guesses()
-    calculate_pattern_table()
+else:
+    pattern_table = get_pattern_table()
+    best_guess, best_guesses = get_best_guesses()
