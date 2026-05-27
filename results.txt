@@ -2314,7 +2314,7 @@
 ['roate', 'plesh', 'testy', 'zesty']                   ['bbbgy', 'bbyyb', 'bgggg', 'ggggg']                   zesty True
 ['roate', 'liman', 'zonal']                            ['bgybb', 'ybbgy', 'ggggg']                            zonal True
 
-Total time taken: 3m:20.40s
+Total time taken: 0m:40.76s
 Total attempts: 2315
 Number of successes: 2315
 Success rate: 100.00000%

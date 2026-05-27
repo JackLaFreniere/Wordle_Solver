@@ -4,8 +4,6 @@ from collections import Counter
 from wordle_game import max_word_size
 import numpy as np
 
-from time import perf_counter
-
 DATA_DIRECTORY = "data/computed_data/"
 
 GUESS_BYG_TABLE_NAME = "pattern_table.npy"
@@ -120,6 +118,8 @@ def create_best_guesses() -> tuple[str, np.ndarray]:
     """
     Calculates and saves the newly computed best **first** guess and best **second** guesses as well as returning both.
     """
+    global pattern_table
+    pattern_table = get_pattern_table()
         
     best_first_guess, best_guesses_table = calculate_best_guesses()
     np.save(GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME, best_guesses_table)
@@ -136,8 +136,8 @@ def calculate_best_guesses() -> tuple[str, np.ndarray]:
         
     best_guesses_table = np.zeros((total_byg_combinations), dtype=np.uint16)    
     
-    answers_indexes = word_helper.get_possible_answers_indexes()
-    guesses_indexes = word_helper.get_accepted_guesses_indexes()
+    answers_indexes = np.array(word_helper.get_possible_answers_indexes())
+    guesses_indexes = np.array(word_helper.get_accepted_guesses_indexes())
 
     print("Getting the best first word")
     best_first_guess = get_word(guesses_indexes, answers_indexes)
@@ -146,7 +146,7 @@ def calculate_best_guesses() -> tuple[str, np.ndarray]:
     for i in range(total_byg_combinations):
         print(f"Best guess: {i + 1} out of {total_byg_combinations} ({(i + 1)/total_byg_combinations:.2%})")
 
-        remaining_guesses, remaining_answers = shorten_words(copy.deepcopy(guesses_indexes), copy.deepcopy(answers_indexes), best_first_guess, i)
+        remaining_guesses, remaining_answers = shorten_words(guesses_indexes, answers_indexes, best_first_guess, i)
         best_second_word = get_word(remaining_guesses, remaining_answers)
         
         best_guesses_table[i] = best_second_word
@@ -188,27 +188,20 @@ def get_score(buckets:np.ndarray) -> float:
     return np.sum(buckets * buckets) / np.sum(buckets)
 
 def get_word(accepted_guesses_indexes:list, remaining_words_indexes:list) -> int:
-    pattern_table = get_pattern_table()
-    best_guess = accepted_guesses_indexes[0]
-    best_guess_score = float("inf")
+    counts = np.zeros((243, len(accepted_guesses_indexes)), dtype=np.uint32)
+    patterns = pattern_table[np.ix_(remaining_words_indexes, accepted_guesses_indexes)]
 
-    
-    for i in accepted_guesses_indexes:
-        buckets = np.bincount(pattern_table[remaining_words_indexes, i])
-            
-        score = get_score(buckets)
-        if score < best_guess_score:
-            best_guess = i
-            best_guess_score = score
+    for pattern in range(243):
+        counts[pattern] = np.sum(patterns == pattern, axis=0)
+
+    scores = np.sum(counts * counts, axis=0)
+    best_guess = accepted_guesses_indexes[np.argmin(scores)]
     
     return best_guess
 
 def shorten_words(remaining_guess_indexes:np.ndarray, remaining_answer_indexes:np.ndarray, guess:str, response:str) -> tuple[list, list]:
-    pattern_table = get_pattern_table()
+    global pattern_table
     
-    if guess in remaining_answer_indexes:
-        remaining_answer_indexes = remaining_answer_indexes[remaining_answer_indexes != guess]
-
     if guess in remaining_guess_indexes:
         remaining_guess_indexes = remaining_guess_indexes[remaining_guess_indexes != guess]
 
