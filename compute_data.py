@@ -192,6 +192,7 @@ def get_word(accepted_guesses_indexes:list, remaining_words_indexes:list) -> int
     best_guess = accepted_guesses_indexes[0]
     best_guess_score = float("inf")
 
+    
     for i in accepted_guesses_indexes:
         buckets = np.bincount(pattern_table[remaining_words_indexes, i])
             

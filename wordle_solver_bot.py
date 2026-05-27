@@ -32,11 +32,13 @@ class Jarvis:
         remaining_guesses_indexes = copy.deepcopy(self.accepted_guesses_indexes)
         previous_response = -1
 
-        while not self.wordle.is_game_over():
+        while not self.wordle.is_game_over() and (len(results) == 0 or results[-1] != "ggggg"):
             if self.wordle.get_number_of_words_attempted() == 0: #Precomputed first guess
                 guess = self.best_guess
             elif len(remaining_answers_indexes) <= 2: #Force a valid guess there is one or two words left
-                guess = remaining_answers_indexes[0]
+                answer_str = word_helper.get_possible_answers()[remaining_answers_indexes[0]]
+                guess_index = word_helper.get_accepted_guesses().index(answer_str)
+                guess = guess_index
             elif self.wordle.get_number_of_words_attempted() == 1: #Precomputed second guess
                 guess = self.best_guesses_table[previous_response]
             else: #Compute the current best guess
@@ -45,9 +47,9 @@ class Jarvis:
             response = self.wordle.guess(guess)
 
             if response == "":
-                remaining_guesses_indexes.remove(guess)
+                remaining_guesses_indexes = remaining_guesses_indexes[remaining_guesses_indexes != guess]
                 if guess in remaining_answers_indexes:
-                    remaining_answers_indexes.remove(guess)
+                    remaining_answers_indexes = remaining_answers_indexes[remaining_answers_indexes != guess]
                 continue
             
             previous_response = response
@@ -55,5 +57,8 @@ class Jarvis:
 
             attempts.append(word_helper.get_index_to_guess(guess))
             results.append(get_int_to_byg(response))
+
+        if word == "":
+            return
 
         return (attempts, results, word_helper.get_index_to_answer(word), results[-1] == "ggggg")

@@ -13,7 +13,7 @@ class Actual_Wordle(Wordle):
         print(f"My guess is: {word_helper.get_index_to_guess(guess)}")
         byg = input("Enter the byg combination >> ")
         
-        if byg == 3 ** max_word_size - 1:
+        if byg == "ggggg":
             self.attempts = self.max_attempts
         
         if not byg:
