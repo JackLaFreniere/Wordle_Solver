@@ -47,8 +47,6 @@ class Jarvis:
 
             if response == "":
                 remaining_guesses_indexes = remaining_guesses_indexes[remaining_guesses_indexes != guess]
-                if guess in remaining_answers_indexes:
-                    remaining_answers_indexes = remaining_answers_indexes[remaining_answers_indexes != guess]
                 continue
             
             previous_response = response
