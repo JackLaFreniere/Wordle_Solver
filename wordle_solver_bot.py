@@ -1,6 +1,6 @@
 import wordle_game, actual_game, word_helper, copy
 import numpy as np
-from compute_data import initialize_data, get_pattern_table, get_best_guesses, get_word, shorten_words, get_int_to_byg
+from compute_data import initialize_data, get_pattern_table, get_best_guesses, get_word, shorten_words, get_int_to_byg, get_answer_index_to_guess_index_table
 
 class Jarvis:
     def __init__(self):
@@ -11,6 +11,7 @@ class Jarvis:
 
         self.pattern_table = get_pattern_table()
         self.best_guess, self.best_guesses_table = get_best_guesses()
+        self.answer_index_to_guess_index_table = get_answer_index_to_guess_index_table()
         
         self.wordle = wordle_game.Wordle(-1, self.pattern_table)
     
@@ -36,9 +37,7 @@ class Jarvis:
             if self.wordle.get_number_of_words_attempted() == 0: #Precomputed first guess
                 guess = self.best_guess
             elif len(remaining_answers_indexes) <= 2: #Force a valid guess there is one or two words left
-                answer_str = word_helper.get_possible_answers()[remaining_answers_indexes[0]]
-                guess_index = word_helper.get_accepted_guesses().index(answer_str)
-                guess = guess_index
+                guess = self.answer_index_to_guess_index_table[remaining_answers_indexes[0]]
             elif self.wordle.get_number_of_words_attempted() == 1: #Precomputed second guess
                 guess = self.best_guesses_table[previous_response]
             else: #Compute the current best guess

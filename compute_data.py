@@ -1,4 +1,4 @@
-import word_helper, sys, copy
+import word_helper, sys
 from itertools import product
 from collections import Counter
 from wordle_game import max_word_size
@@ -9,10 +9,12 @@ DATA_DIRECTORY = "data/computed_data/"
 GUESS_BYG_TABLE_NAME = "pattern_table.npy"
 GUESS_PRECOMPUTED_TABLE_NAME = "best_guesses.npy"
 BEST_GUESS_NAME = "best_guess.txt"
+ANSWER_INDEX_TO_GUESS_INDEX_NAME = "answer_to_guess_indexes.npy"
 
 GUESS_BYG_TABLE_DIRECTORY_NAME = DATA_DIRECTORY + GUESS_BYG_TABLE_NAME
 GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME = DATA_DIRECTORY + GUESS_PRECOMPUTED_TABLE_NAME
 GUESS_PRECOMPUTED_GUESS_DIRECTORY_NAME = DATA_DIRECTORY + BEST_GUESS_NAME
+GUESS_ANSWER_INDEX_TO_GUESS_INDEX_DIRECTORY_NAME = DATA_DIRECTORY + ANSWER_INDEX_TO_GUESS_INDEX_NAME
 
 byg_to_int_dict, int_to_byd_dict = {}, {}
 
@@ -21,6 +23,7 @@ total_byg_combinations = 3 ** max_word_size
 pattern_table = None
 best_guess = None
 best_guesses = None
+answer_index_to_guess_index_table = None
 
 def initialize_data():
     global byg_to_int_dict, int_to_byd_dict
@@ -80,6 +83,12 @@ def get_best_guesses() -> tuple[str, np.ndarray]:
         return (best_guess, np.load(GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME, mmap_mode="r"))
     except:
         return create_best_guesses()
+
+def get_answer_index_to_guess_index_table() -> np.ndarray:
+    try:
+        return np.load(GUESS_ANSWER_INDEX_TO_GUESS_INDEX_DIRECTORY_NAME, mmap_mode="r")
+    except:
+        return create_answer_index_to_guess_index_table()
 
 def create_pattern_table() -> np.ndarray:
     """
@@ -153,6 +162,26 @@ def calculate_best_guesses() -> tuple[str, np.ndarray]:
 
     return (best_first_guess, best_guesses_table)
 
+def create_answer_index_to_guess_index_table() -> np.ndarray:
+    answer_index_to_guess_index_table = calculate_answer_index_to_guess_index()
+    np.save(GUESS_ANSWER_INDEX_TO_GUESS_INDEX_DIRECTORY_NAME, answer_index_to_guess_index_table)
+    
+    return answer_index_to_guess_index_table
+
+def calculate_answer_index_to_guess_index() -> np.ndarray:
+    answers_indexes = word_helper.get_possible_answers_indexes()
+    answers = word_helper.get_possible_answers()
+    guesses = word_helper.get_accepted_guesses()
+
+    answer_index_to_guess_index_table = np.zeros(len(answers_indexes), dtype=np.uint16)    
+
+    for answer in answers_indexes:
+        answer_str = answers[answer]
+        guess_index = guesses.index(answer_str)
+        answer_index_to_guess_index_table[answer] = guess_index
+
+    return answer_index_to_guess_index_table
+
 def get_byg(answer:int, guess:int) -> str:
     """
     Calculates the expected pattern of byg for a given answer and guess.
@@ -218,6 +247,9 @@ if __name__ == "__main__":
             create_pattern_table()
         if any(flag in sys.argv for flag in ("--bg", "--all")):
             create_best_guesses()
+        if any(flag in sys.argv for flag in ("--ag", "--all")):
+            create_answer_index_to_guess_index_table()
 else:
     pattern_table = get_pattern_table()
     best_guess, best_guesses = get_best_guesses()
+    answer_index_to_guess_index_table = get_answer_index_to_guess_index_table()
