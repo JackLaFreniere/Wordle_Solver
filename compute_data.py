@@ -25,10 +25,15 @@ best_guess = None
 best_guesses = None
 answer_index_to_guess_index_table = None
 
+accepted_guesses = None
+possible_answers = None
+
 def initialize_data():
-    global byg_to_int_dict, int_to_byd_dict
+    global byg_to_int_dict, int_to_byd_dict, accepted_guesses, possible_answers
 
     byg_to_int_dict, int_to_byd_dict = get_byg_and_int_dict()
+    accepted_guesses = word_helper.get_accepted_guesses()
+    possible_answers = word_helper.get_possible_answers()
 
 def get_byg_and_int_dict() -> tuple[dict[str, int], dict[int, str]]:
     byg_to_int, int_to_byg = {}, {}
@@ -127,8 +132,9 @@ def create_best_guesses() -> tuple[str, np.ndarray]:
     """
     Calculates and saves the newly computed best **first** guess and best **second** guesses as well as returning both.
     """
-    global pattern_table
+    global pattern_table, answer_index_to_guess_index_table
     pattern_table = get_pattern_table()
+    answer_index_to_guess_index_table = get_answer_index_to_guess_index_table()
         
     best_first_guess, best_guesses_table = calculate_best_guesses()
     np.save(GUESS_PRECOMPUTED_TABLE_DIRECTORY_NAME, best_guesses_table)
@@ -217,6 +223,8 @@ def get_score(buckets:np.ndarray) -> float:
     return np.sum(buckets * buckets) / np.sum(buckets)
 
 def get_word(accepted_guesses_indexes:list, remaining_words_indexes:list) -> int:
+    global accepted_guesses, possible_answers, answer_index_to_guess_index_table
+
     counts = np.zeros((243, len(accepted_guesses_indexes)), dtype=np.uint32)
     patterns = pattern_table[np.ix_(remaining_words_indexes, accepted_guesses_indexes)]
 
@@ -224,9 +232,14 @@ def get_word(accepted_guesses_indexes:list, remaining_words_indexes:list) -> int
         counts[pattern] = np.sum(patterns == pattern, axis=0)
 
     scores = np.sum(counts * counts, axis=0)
-    best_guess = accepted_guesses_indexes[np.argmin(scores)]
+    tied_guesses = accepted_guesses_indexes[scores == scores.min()]
+    possible_answer_guess_indexes = answer_index_to_guess_index_table[remaining_words_indexes]
     
-    return best_guess
+    valid_tied_guesses = tied_guesses[np.isin(tied_guesses, possible_answer_guess_indexes)]
+    if len(valid_tied_guesses) > 0:
+        return valid_tied_guesses[0]
+
+    return tied_guesses[0]
 
 def shorten_words(remaining_guess_indexes:np.ndarray, remaining_answer_indexes:np.ndarray, guess:str, response:str) -> tuple[list, list]:
     global pattern_table
@@ -243,13 +256,13 @@ def shorten_words(remaining_guess_indexes:np.ndarray, remaining_answer_indexes:n
 if __name__ == "__main__":
     initialize_data()
     if len(sys.argv) > 1:
+        if any(flag in sys.argv for flag in ("--ag", "--all")):
+            create_answer_index_to_guess_index_table()
         if any(flag in sys.argv for flag in ("--pt", "--all")):
             create_pattern_table()
         if any(flag in sys.argv for flag in ("--bg", "--all")):
             create_best_guesses()
-        if any(flag in sys.argv for flag in ("--ag", "--all")):
-            create_answer_index_to_guess_index_table()
 else:
+    answer_index_to_guess_index_table = get_answer_index_to_guess_index_table()
     pattern_table = get_pattern_table()
     best_guess, best_guesses = get_best_guesses()
-    answer_index_to_guess_index_table = get_answer_index_to_guess_index_table()
